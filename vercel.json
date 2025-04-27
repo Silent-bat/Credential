@@ -14,7 +14,7 @@
     }
   },
   "env": {
-    "DATABASE_URL": "DATABASE_URL",
+    "DATABASE_URL": "postgresql://credential_owner:npg_LTKjmCv5lMw9@ep-blue-snow-a20y4y4g-pooler.eu-central-1.aws.neon.tech/credential?sslmode=require",
     "JWT_SECRET": "JWT_SECRET",
     "NEXTAUTH_SECRET": "f8107cf6a1539b556f26b069306144f2874ca7d9e7d86ff32bd96f2c1e7887b6",
     "NEXTAUTH_URL": "https://credential-six.vercel.app",
