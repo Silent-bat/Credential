@@ -32,6 +32,15 @@ const nextConfig = {
   sassOptions: {
     includePaths: [path.join(__dirname, 'styles')],
   },
+  // Ensure API routes work in development and production
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: '/api/:path*',
+      }
+    ];
+  },
   webpack: (config, { isServer }) => {
     // Add a rule to handle the problematic file
     config.module.rules.push({
@@ -111,7 +120,8 @@ const nextConfig = {
   // Updated from experimental.serverComponentsExternalPackages to serverExternalPackages
   serverExternalPackages: ['pdfkit', 'canvas'],
   experimental: {
-    optimizeCss: true
+    optimizeCss: true,
+    serverActions: true
   }
 };
 
