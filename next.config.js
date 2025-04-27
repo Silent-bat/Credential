@@ -121,7 +121,9 @@ const nextConfig = {
   serverExternalPackages: ['pdfkit', 'canvas'],
   experimental: {
     optimizeCss: true,
-    serverActions: true
+    serverActions: {
+      allowedOrigins: ["localhost:3000"]
+    }
   }
 };
 
