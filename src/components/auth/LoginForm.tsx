@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { signIn, useSession, getSession } from 'next-auth/react';
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
@@ -21,16 +21,14 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    setDebugInfo('Login process started');
 
     try {
-      // Sign in using credentials
+      // Sign in using credentials and allow redirection
       const result = await signIn('credentials', {
         email,
         password,
@@ -39,60 +37,18 @@ export function LoginForm() {
 
       if (result?.error) {
         setError(result.error);
-        setDebugInfo(`Sign-in error: ${result.error}`);
         setIsLoading(false);
         return;
       }
 
-      setDebugInfo('Sign-in successful, getting session...');
-      
-      // Wait a moment for the session to be properly established
-      setTimeout(async () => {
-        try {
-          // Get the updated session after login
-          const session = await getSession();
-          
-          if (!session?.user) {
-            setError('Session not found after login');
-            setDebugInfo('No session found after login');
-            setIsLoading(false);
-            return;
-          }
-          
-          // Extract and normalize the user role
-          const userRole = (session.user.role || '').toUpperCase();
-          setDebugInfo(`Session retrieved, user role: ${userRole}`);
-          
-          // Determine the correct dashboard path based on role
-          let dashboardPath;
-          
-          if (userRole === 'ADMIN') {
-            dashboardPath = `/${locale}/dashboard/institution`;
-          } else if (userRole === 'INSTITUTION') {
-            dashboardPath = `/${locale}/dashboard/institution`;
-          } else {
-            dashboardPath = `/${locale}/dashboard`;
-          }
-          
-          setDebugInfo(`Redirecting to: ${dashboardPath}`);
-          console.log(`Redirecting to: ${dashboardPath}`);
-          
-          // Perform the redirect
-          router.push(dashboardPath);
-          router.refresh(); // Force a refresh to ensure the redirect happens
-          
-        } catch (sessionErr) {
-          console.error('Session error:', sessionErr);
-          setError('Error retrieving session after login');
-          setDebugInfo(`Session error: ${sessionErr}`);
-          setIsLoading(false);
-        }
-      }, 500); // Short delay to ensure session is established
-      
+      if (result?.ok) {
+        // Redirect to dashboard
+        router.refresh();
+        router.push(`/${locale}/dashboard`);
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError(t('common.messages.error'));
-      setDebugInfo(`Unexpected error: ${err}`);
       setIsLoading(false);
     }
   };
@@ -153,12 +109,6 @@ export function LoginForm() {
       {error && (
         <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
           <div className="text-sm text-red-700 dark:text-red-400">{error}</div>
-        </div>
-      )}
-      
-      {process.env.NODE_ENV === 'development' && debugInfo && (
-        <div className="rounded-md bg-gray-50 p-2 dark:bg-gray-900/20 text-xs text-gray-500">
-          Debug: {debugInfo}
         </div>
       )}
 

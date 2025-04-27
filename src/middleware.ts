@@ -35,6 +35,17 @@ const protectedRoutes = [
   '/settings',
 ];
 
+// Authentication-related paths that should never be protected
+const authPaths = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/error',
+  '/auth/verification',
+  '/verify'
+];
+
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
@@ -63,17 +74,27 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   
+  // Extract locale from pathname
+  const locale = pathname.split('/')[1];
+  
   // At this point, we have a localized URL
-  // Check authentication for protected routes
-  const token = await getToken({ req: request });
+  // Check if this is an auth-related path that should never be protected
   const pathWithoutLocale = pathname.replace(/^\/[^\/]+/, '');
+  if (authPaths.some(path => pathWithoutLocale === path || pathWithoutLocale.startsWith(`${path}/`))) {
+    return NextResponse.next();
+  }
+  
+  // Check authentication for protected routes
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET
+  });
   
   const isProtectedRoute = protectedRoutes.some(route => 
     pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
   );
   
   if (isProtectedRoute && !token) {
-    const locale = pathname.split('/')[1];
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/auth/login`;
     url.search = `callbackUrl=${encodeURIComponent(request.url)}`;
