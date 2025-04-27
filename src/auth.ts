@@ -122,9 +122,9 @@ export const authOptions: NextAuthOptions = {
     }
   },
   pages: {
-    signIn: "/en/auth/login",
-    signOut: "/en/auth/logout",
-    error: "/en/auth/login",
+    signIn: "/auth/login",
+    signOut: "/auth/logout",
+    error: "/auth/error",
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',

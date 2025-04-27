@@ -14,10 +14,10 @@
   "env": {
     "DATABASE_URL": "DATABASE_URL",
     "JWT_SECRET": "JWT_SECRET",
-    "NEXTAUTH_SECRET": "NEXTAUTH_SECRET",
-    "NEXTAUTH_URL": "NEXTAUTH_URL",
+    "NEXTAUTH_SECRET": "f8107cf6a1539b556f26b069306144f2874ca7d9e7d86ff32bd96f2c1e7887b6",
+    "NEXTAUTH_URL": "https://credential-six.vercel.app",
     "IOTA_NODE_URL": "IOTA_NODE_URL",
     "IOTA_EXPLORER_URL": "IOTA_EXPLORER_URL",
-    "NEXT_PUBLIC_APP_URL": "NEXT_PUBLIC_APP_URL"
+    "NEXT_PUBLIC_APP_URL": "https://credential-six.vercel.app"
   }
 } 
