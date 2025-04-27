@@ -1,0 +1,22 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "functions": {
+    "api/**": {
+      "memory": 1024
+    }
+  },
+  "env": {
+    "DATABASE_URL": "DATABASE_URL",
+    "JWT_SECRET": "JWT_SECRET",
+    "NEXTAUTH_SECRET": "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL": "NEXTAUTH_URL",
+    "IOTA_NODE_URL": "IOTA_NODE_URL",
+    "IOTA_EXPLORER_URL": "IOTA_EXPLORER_URL",
+    "NEXT_PUBLIC_APP_URL": "NEXT_PUBLIC_APP_URL"
+  }
+} 

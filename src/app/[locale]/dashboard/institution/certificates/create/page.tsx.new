@@ -1,0 +1,171 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import CertificateCreateClient from "@/components/institution/CertificateCreateClient";
+import { getTranslations } from 'next-intl/server';
+
+type Props = {
+  params: { locale: string }
+};
+
+export default async function CreateCertificatePage({ params }: Props) {
+  // Properly await params to fix the NextJS warning
+  const resolvedParams = await Promise.resolve(params);
+  const { locale } = resolvedParams;
+  
+  try {
+    // First try common translations that we need
+    const commonT = await getTranslations({ locale, namespace: 'common' });
+    
+    // Create translations object with defaults to start
+    const translations = {
+      createNewCertificate: "Create New Certificate",
+      certificateTitle: "Certificate Title",
+      certificateTitlePlaceholder: "e.g., Bachelor of Science in Computer Science",
+      recipientName: "Recipient Name",
+      recipientNamePlaceholder: "Recipient full name",
+      recipientEmail: "Recipient Email",
+      recipientEmailPlaceholder: "email@example.com",
+      description: "Description",
+      descriptionPlaceholder: "Details about the certification and achievements",
+      designCertificate: "Design Certificate",
+      designNewCertificate: "Design New Certificate",
+      designNewCertificateDescription: "Create a custom certificate design with our template builder",
+      certificateInformation: "Certificate Information",
+      designOptions: "Design Options",
+      issueDate: "Issue Date",
+      expiryDate: "Expiry Date",
+      back: commonT('buttons.back'),
+      cancel: commonT('buttons.cancel'),
+      save: commonT('buttons.save'),
+      createCertificate: "Create Certificate",
+      uploadCertificate: "Upload Certificate"
+    };
+    
+    // Try to load certificates translations from various namespaces
+    try {
+      // First try lowercase namespace
+      const certificatesT = await getTranslations({ locale, namespace: 'certificates' });
+      
+      // Update translations with lowercase namespace values
+      if (certificatesT) {
+        Object.keys(translations).forEach(key => {
+          try {
+            if (key !== 'back' && key !== 'cancel' && key !== 'save') {
+              // @ts-ignore - Dynamic access
+              const translation = certificatesT(key);
+              if (translation) {
+                // @ts-ignore - Dynamic access
+                translations[key] = translation;
+              }
+            }
+          } catch (e) {
+            // Ignore translation errors
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('Could not load lowercase certificates namespace:', error);
+    }
+    
+    // Try to load uppercase Certificates namespace as well
+    try {
+      const upperCertificatesT = await getTranslations({ locale, namespace: 'Certificates' });
+      
+      // Update translations with uppercase namespace values
+      if (upperCertificatesT) {
+        Object.keys(translations).forEach(key => {
+          try {
+            if (key !== 'back' && key !== 'cancel' && key !== 'save') {
+              // @ts-ignore - Dynamic access
+              const translation = upperCertificatesT(key);
+              if (translation) {
+                // @ts-ignore - Dynamic access
+                translations[key] = translation;
+              }
+            }
+          } catch (e) {
+            // Ignore translation errors
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('Could not load uppercase Certificates namespace:', error);
+    }
+    
+    // Check auth
+    const session = await auth();
+    const user = session?.user;
+    
+    if (!user) {
+      return redirect(`/${locale}/auth/login`);
+    }
+    
+    // Check for institution role (case-insensitive check for any role containing 'institution')
+    const isInstitutionAdmin = user.role?.toUpperCase()?.includes('INSTITUTION');
+    
+    if (!isInstitutionAdmin) {
+      return redirect(`/${locale}/dashboard`);
+    }
+    
+    // Create a compatible user object for the form
+    const formUser = {
+      id: user.id,
+      name: user.name || undefined,
+      email: user.email || undefined,
+      role: user.role || undefined
+    };
+    
+    return (
+      <CertificateCreateClient user={formUser} locale={locale} translations={translations} />
+    );
+  } catch (error) {
+    console.error("Error in certificate creation page:", error);
+    
+    // Fallback to english translations if there's a problem
+    const fallbackTranslations = {
+      createNewCertificate: "Create New Certificate",
+      certificateTitle: "Certificate Title",
+      certificateTitlePlaceholder: "e.g., Bachelor of Science in Computer Science",
+      recipientName: "Recipient Name",
+      recipientNamePlaceholder: "Recipient full name",
+      recipientEmail: "Recipient Email",
+      recipientEmailPlaceholder: "email@example.com",
+      description: "Description",
+      descriptionPlaceholder: "Details about the certification and achievements",
+      designCertificate: "Design Certificate",
+      designNewCertificate: "Design New Certificate",
+      designNewCertificateDescription: "Create a custom certificate design with our template builder",
+      certificateInformation: "Certificate Information",
+      designOptions: "Design Options",
+      issueDate: "Issue Date",
+      expiryDate: "Expiry Date",
+      back: "Back",
+      cancel: "Cancel",
+      save: "Save",
+      createCertificate: "Create Certificate",
+      uploadCertificate: "Upload Certificate"
+    };
+    
+    const session = await auth();
+    const user = session?.user;
+    
+    if (!user) {
+      return redirect(`/${locale}/auth/login`);
+    }
+    
+    if (!user.role?.toUpperCase()?.includes('INSTITUTION')) {
+      return redirect(`/${locale}/dashboard`);
+    }
+    
+    const formUser = {
+      id: user.id,
+      name: user.name || undefined,
+      email: user.email || undefined,
+      role: user.role || undefined
+    };
+    
+    return (
+      <CertificateCreateClient user={formUser} locale={locale} translations={fallbackTranslations} />
+    );
+  }
+}

@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  name             String?
+  password         String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  role             String            @default("USER")
+  preferredLocale  String            @default("en")
+  ActivityLog      ActivityLog[]
+  institutionUsers InstitutionUser[]
+  invitationsSent  Invitation[]      @relation("SentInvitations")
+  passwordResets   PasswordReset?
+  Ticket           Ticket[]
+  TicketMessage    TicketMessage[]
+  settings         UserSettings?
+}
+
+model Institution {
+  id               String            @id @default(uuid())
+  name             String
+  description      String?
+  website          String?
+  address          String?
+  phone            String?
+  isApproved       Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  logo             String?
+  status           String            @default("PENDING")
+  type             InstitutionType   @default(UNIVERSITY)
+  ActivityLog      ActivityLog[]
+  certificates     Certificate[]
+  institutionUsers InstitutionUser[]
+  invitations      Invitation[]
+}
+
+model InstitutionUser {
+  id            String      @id @default(uuid())
+  userId        String
+  institutionId String
+  createdAt     DateTime    @default(now())
+  role          String      @default("STAFF")
+  updatedAt     DateTime    @default(now()) @updatedAt
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, institutionId])
+}
+
+model ActivityLog {
+  id            String       @id @default(uuid())
+  action        LogAction
+  category      LogCategory
+  details       String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  status        LogStatus
+  userId        String?
+  institutionId String?
+  certificateId String?
+  createdAt     DateTime     @default(now())
+  Certificate   Certificate? @relation(fields: [certificateId], references: [id])
+  Institution   Institution? @relation(fields: [institutionId], references: [id])
+  User          User?        @relation(fields: [userId], references: [id])
+}
+
+model FileStorage {
+  id          String   @id @default(uuid())
+  name        String
+  contentType String
+  size        Int
+  folder      String?
+  data        Bytes
+  uploadDate  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([folder])
+}
+
+model Ticket {
+  id               String             @id @default(uuid())
+  title            String
+  description      String
+  status           TicketStatus       @default(OPEN)
+  priority         TicketPriority     @default(MEDIUM)
+  category         TicketCategory     @default(GENERAL)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  userId           String
+  User             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  TicketAttachment TicketAttachment[]
+  TicketMessage    TicketMessage[]
+}
+
+model TicketAttachment {
+  id            String         @id @default(uuid())
+  url           String
+  publicId      String?
+  fileName      String
+  fileType      String
+  fileSize      Int
+  ticketId      String?
+  messageId     String?
+  TicketMessage TicketMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  Ticket        Ticket?        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model TicketMessage {
+  id               String             @id @default(uuid())
+  content          String
+  createdAt        DateTime           @default(now())
+  ticketId         String
+  userId           String
+  TicketAttachment TicketAttachment[]
+  Ticket           Ticket             @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  User             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Certificate {
+  id                String          @id @default(uuid())
+  title             String
+  recipientName     String
+  recipientEmail    String
+  issueDate         DateTime        @default(now())
+  expiryDate        DateTime?
+  institutionId     String
+  pdfUrl            String?
+  pdfHash           String?
+  blockchainTxId    String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  description       String?
+  metadata          String?
+  status            String          @default("ISSUED")
+  type              CertificateType @default(CERTIFICATE)
+  fileHash          String?
+  fileUrl           String?
+  qrCodeUrl         String?
+  verificationId    String?         @unique
+  blockchainHash    String?
+  blockchainNetwork String?         @default("IOTA")
+  designData        Json?
+  designType        String?         @default("UPLOADED")
+  issuedByUserId    String?
+  ActivityLog       ActivityLog[]
+  institution       Institution     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id              String      @id @default(uuid())
+  email           String
+  token           String      @unique
+  role            String      @default("STAFF")
+  status          String      @default("PENDING")
+  institutionId   String
+  invitedByUserId String
+  message         String?
+  expiresAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  institution     Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  sender          User        @relation("SentInvitations", fields: [invitedByUserId], references: [id])
+
+  @@unique([email, institutionId, status])
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  darkMode           Boolean  @default(false)
+  emailNotifications Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum CertificateType {
+  DEGREE
+  DIPLOMA
+  CERTIFICATE
+  COURSE
+  ACHIEVEMENT
+  PROFESSIONAL
+  LICENSE
+  OTHER
+}
+
+enum InstitutionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InstitutionType {
+  UNIVERSITY
+  COLLEGE
+  SCHOOL
+  TRAINING_CENTER
+  COMPANY
+  GOVERNMENT
+  NONPROFIT
+  OTHER
+}
+
+enum LogAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  VERIFY
+  BLOCKCHAIN_UPLOAD
+  BLOCKCHAIN_VERIFY
+  EXPORT
+  IMPORT
+  APPROVE
+  REJECT
+  DESIGN_CERTIFICATE
+  UPLOAD_CERTIFICATE
+}
+
+enum LogCategory {
+  USER
+  INSTITUTION
+  CERTIFICATE
+  AUTHENTICATION
+  VERIFICATION
+  BLOCKCHAIN
+  ADMIN
+  SYSTEM
+}
+
+enum LogStatus {
+  SUCCESS
+  FAILURE
+  WARNING
+  INFO
+}
+
+enum Role {
+  ADMIN
+  INSTITUTION
+  USER
+}
+
+enum TicketCategory {
+  TECHNICAL
+  BILLING
+  ACCOUNT
+  GENERAL
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
