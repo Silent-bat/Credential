@@ -164,4 +164,6 @@ export default async function AdminLogsPage({ params, searchParams }: Props) {
       )}
     </div>
   );
-} 
+}
+
+export const dynamic = 'force-dynamic' 

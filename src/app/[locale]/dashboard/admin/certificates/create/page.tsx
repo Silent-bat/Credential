@@ -96,4 +96,6 @@ export default async function CreateCertificatePage({
       userRole={session.user.role}
               />
   );
-} 
+}
+
+export const dynamic = 'force-dynamic' 
