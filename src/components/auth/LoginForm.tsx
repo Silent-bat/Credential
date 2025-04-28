@@ -27,6 +27,8 @@ export function LoginForm() {
     setIsLoading(true);
     setError('');
 
+    console.log("Login attempt with email:", email);
+
     try {
       // Sign in using credentials and allow redirection
       const result = await signIn('credentials', {
@@ -35,6 +37,8 @@ export function LoginForm() {
         redirect: false,
       });
 
+      console.log("Login result:", result);
+
       if (result?.error) {
         setError(result.error);
         setIsLoading(false);
@@ -42,9 +46,21 @@ export function LoginForm() {
       }
 
       if (result?.ok) {
+        console.log("Login successful, preparing to redirect");
+        
         // Redirect to dashboard
         router.refresh();
-        router.push(`/${locale}/dashboard`);
+        
+        // Use a timeout to ensure the session is fully updated before redirecting
+        setTimeout(() => {
+          console.log("Redirecting to dashboard");
+          
+          // Route to the main dashboard page which will handle role-specific redirects
+          router.push(`/${locale}/dashboard`);
+          
+          // Force a page reload to ensure session data is fresh
+          window.location.href = `/${locale}/dashboard`;
+        }, 500);
       }
     } catch (err) {
       console.error('Login error:', err);
