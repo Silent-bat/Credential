@@ -78,11 +78,22 @@ export default async function AdminUsersPage({ params }: Props) {
           }
         }
       },
-    }) as UserWithInstitution[];
+    });
   } catch (error) {
     console.error("Database error:", error);
     dbError = true;
   }
+
+  // Safely serialize users for client components
+  const serializedUsers = users.map(user => ({
+    ...user,
+    // Convert Date to string for proper serialization
+    createdAt: user.createdAt.toISOString(),
+    // Ensure institutionUsers is always an array
+    institutionUsers: user.institutionUsers || [],
+    // Ensure name is always a string
+    name: user.name || "",
+  }));
 
   return (
     <div className="p-8">
@@ -111,17 +122,15 @@ export default async function AdminUsersPage({ params }: Props) {
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-md">
                 Unable to connect to the database. Please check your database configuration or try again later.
               </p>
-              <form action={async () => { 'use server'; }}>
-                <Button variant="outline" className="mt-4" type="submit">
-                  Try Again
-                </Button>
-              </form>
+              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
             </div>
           </CardContent>
         </Card>
       ) : (
         <UsersList 
-          initialUsers={users} 
+          initialUsers={serializedUsers} 
           locale={currentLocale} 
         />
       )}

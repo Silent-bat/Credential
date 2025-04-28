@@ -55,30 +55,55 @@ export default async function InstitutionsPage({ params }: Props) {
     );
   }
 
-  const institutions = await prisma.institution.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      certificates: {
-        select: {
-          id: true,
-        },
+  let institutions: InstitutionWithRelations[] = [];
+  let error = null;
+
+  try {
+    institutions = await prisma.institution.findMany({
+      orderBy: {
+        createdAt: "desc",
       },
-      institutionUsers: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+      include: {
+        certificates: {
+          select: {
+            id: true,
           },
         },
-        take: 1,
+        institutionUsers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          take: 1,
+        },
       },
-    },
-  }) as unknown as InstitutionWithRelations[];
+    });
+  } catch (err) {
+    console.error("Error fetching institutions:", err);
+    error = "Failed to load institutions data";
+  }
+
+  // Convert dates to strings to avoid serialization issues with client components
+  const serializedInstitutions = institutions.map(institution => ({
+    ...institution,
+    createdAt: institution.createdAt.toISOString(),
+    updatedAt: institution.updatedAt.toISOString(),
+    // Also ensure the types are safe for the client component
+    certificates: institution.certificates || [],
+    institutionUsers: (institution.institutionUsers || []).map(iu => ({
+      ...iu,
+      user: {
+        id: iu.user?.id || '',
+        name: iu.user?.name || '',
+        email: iu.user?.email || ''
+      }
+    }))
+  }));
 
   return (
     <div className="p-8">
@@ -97,10 +122,19 @@ export default async function InstitutionsPage({ params }: Props) {
         </Button>
       </div>
 
-      <InstitutionsList 
-        initialInstitutions={institutions as any} 
-        locale={locale} 
-      />
+      {error ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
+          {error}
+          <Button variant="outline" size="sm" className="ml-4" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      ) : (
+        <InstitutionsList 
+          initialInstitutions={serializedInstitutions} 
+          locale={locale} 
+        />
+      )}
     </div>
   );
 } 

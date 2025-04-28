@@ -1,7 +1,6 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import prisma from '@/lib/db';
 import { getTranslations } from 'next-intl/server';
@@ -63,20 +62,38 @@ export default async function AdminSupportPage({ params }: Props) {
     );
   }
 
-  // Fetch tickets from the database
-  const tickets: Ticket[] = await prisma.ticket.findMany({
-    orderBy: {
-      createdAt: 'desc'
-    },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true
+  let tickets: Ticket[] = [];
+  let error = null;
+
+  try {
+    // Fetch tickets from the database
+    tickets = await prisma.ticket.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
         }
       }
-    }
-  });
+    });
+  } catch (err) {
+    console.error("Error fetching tickets:", err);
+    error = "Failed to load tickets. Please try again later.";
+  }
+
+  // Format date on the server to avoid client-side errors
+  const formattedTickets = tickets.map(ticket => ({
+    ...ticket,
+    // Convert dates to strings
+    createdAt: ticket.createdAt.toISOString(),
+    updatedAt: ticket.updatedAt.toISOString(),
+    // Ensure user is not null
+    user: ticket.user || { name: 'Unknown', email: 'unknown@example.com' }
+  }));
 
   return (
     <div className="p-8">
@@ -95,65 +112,86 @@ export default async function AdminSupportPage({ params }: Props) {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('allTickets')}</CardTitle>
-          <CardDescription>
-            {t('allTicketsDescription')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('id')}</TableHead>
-                <TableHead>{t('title')}</TableHead>
-                <TableHead>{t('user')}</TableHead>
-                <TableHead>{t('status')}</TableHead>
-                <TableHead>{t('priority')}</TableHead>
-                <TableHead>{t('created')}</TableHead>
-                <TableHead>{t('actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tickets.map((ticket) => (
-                <TableRow key={ticket.id}>
-                  <TableCell className="font-medium">{ticket.id}</TableCell>
-                  <TableCell>{ticket.title}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{ticket.user.name}</div>
-                      <div className="text-sm text-gray-500">{ticket.user.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={ticket.status === 'OPEN' ? 'default' : 'secondary'}>
-                      {ticket.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      ticket.priority === 'HIGH' ? 'destructive' :
-                      ticket.priority === 'MEDIUM' ? 'secondary' :
-                      'default'
-                    }>
-                      {ticket.priority}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(ticket.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/${currentLocale}/dashboard/admin/support/${ticket.id}`}>
-                        {t('view')}
-                      </Link>
-                    </Button>
-                  </TableCell>
+      {error ? (
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p className="text-red-500">{error}</p>
+              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('allTickets')}</CardTitle>
+            <CardDescription>
+              {t('allTicketsDescription')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('id')}</TableHead>
+                  <TableHead>{t('title')}</TableHead>
+                  <TableHead>{t('user')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
+                  <TableHead>{t('priority')}</TableHead>
+                  <TableHead>{t('created')}</TableHead>
+                  <TableHead>{t('actions')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {formattedTickets.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      No tickets found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  formattedTickets.map((ticket) => (
+                    <TableRow key={ticket.id}>
+                      <TableCell className="font-medium">{ticket.id.substring(0, 8)}...</TableCell>
+                      <TableCell>{ticket.title}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{ticket.user.name || "N/A"}</div>
+                          <div className="text-sm text-gray-500">{ticket.user.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={ticket.status === 'OPEN' ? 'default' : 'secondary'}>
+                          {ticket.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          ticket.priority === 'HIGH' ? 'destructive' :
+                          ticket.priority === 'MEDIUM' ? 'secondary' :
+                          'default'
+                        }>
+                          {ticket.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(ticket.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/${currentLocale}/dashboard/admin/support/${ticket.id}`}>
+                            {t('view')}
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 } 
