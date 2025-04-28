@@ -711,5 +711,18 @@
       "title": "What Our Customers Say",
       "subtitle": "Trusted by organizations worldwide to secure and verify their credentials"
     }
+  },
+  "Analytics": {
+    "title": "Analytics Dashboard",
+    "description": "Monitor platform activity and performance metrics",
+    "totalUsers": "Total Users",
+    "totalInstitutions": "Total Institutions",
+    "totalCertificates": "Total Certificates",
+    "userGrowth": "User Growth (30 days)",
+    "certificateIssuance": "Certificate Issuance (30 days)",
+    "topInstitutions": "Top Institutions",
+    "recentActivity": "Recent Activity",
+    "certificates": "certificates",
+    "users": "users"
   }
 } 

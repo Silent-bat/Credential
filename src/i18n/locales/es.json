@@ -645,5 +645,18 @@
     "yourTickets": "Sus tickets de soporte",
     "yourTicketsDescription": "Ver sus tickets de soporte anteriores y su estado",
     "noTicketsYet": "Aún no ha enviado ningún ticket de soporte"
+  },
+  "Analytics": {
+    "title": "Panel de Análisis",
+    "description": "Monitoree la actividad de la plataforma y las métricas de rendimiento",
+    "totalUsers": "Total de Usuarios",
+    "totalInstitutions": "Total de Instituciones",
+    "totalCertificates": "Total de Certificados",
+    "userGrowth": "Crecimiento de Usuarios (30 días)",
+    "certificateIssuance": "Emisión de Certificados (30 días)",
+    "topInstitutions": "Instituciones Principales",
+    "recentActivity": "Actividad Reciente",
+    "certificates": "Certificados",
+    "users": "Usuarios"
   }
 } 

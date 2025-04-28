@@ -609,5 +609,18 @@
     "logoDescription": "Laden Sie ein Institutionslogo hoch, das auf dem Zertifikat angezeigt werden soll",
     "continueToDetails": "Weiter zu Details",
     "awardedTo": "Verliehen an"
+  },
+  "Analytics": {
+    "title": "Analytisches Dashboard",
+    "description": "Überwachen Sie die Plattformaktivität und Leistungsmetriken",
+    "totalUsers": "Gesamtbenutzer",
+    "totalInstitutions": "Gesamtinstitutionen",
+    "totalCertificates": "Gesamtzertifikate",
+    "userGrowth": "Benutzerwachstum (30 Tage)",
+    "certificateIssuance": "Zertifikatsausstellung (30 Tage)",
+    "topInstitutions": "Top-Institutionen",
+    "recentActivity": "Aktuelle Aktivität",
+    "certificates": "Zertifikate",
+    "users": "Benutzer"
   }
 } 

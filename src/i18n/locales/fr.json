@@ -377,11 +377,11 @@
     "certificates": "Certificats",
     "logs": "Journaux d'activité",
     "statistics": "Statistiques",
-        "verification": "Vérification",
+    "verification": "Vérification",
     "help": "Aide",
     "about": "À propos"
-    },
-    "settings": {
+  },
+  "settings": {
     "title": "Paramètres",
     "profile": "Paramètres du profil",
     "account": "Paramètres du compte",
@@ -673,5 +673,18 @@
     "logoDescription": "Téléchargez un logo d'institution à afficher sur le certificat",
     "continueToDetails": "Continuer vers les Détails",
     "awardedTo": "Décerné à"
+  },
+  "Analytics": {
+    "title": "Tableau de Bord Analytique",
+    "description": "Surveillez l'activité de la plateforme et les métriques de performance",
+    "totalUsers": "Total des Utilisateurs",
+    "totalInstitutions": "Total des Institutions",
+    "totalCertificates": "Total des Certificats",
+    "userGrowth": "Croissance des Utilisateurs (30 jours)",
+    "certificateIssuance": "Émission de Certificats (30 jours)",
+    "topInstitutions": "Institutions Principales",
+    "recentActivity": "Activité Récente",
+    "certificates": "Certificats",
+    "users": "Utilisateurs"
   }
 } 
