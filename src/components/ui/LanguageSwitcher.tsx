@@ -4,6 +4,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { locales, availableLocales } from '@/i18n/config';
 import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Languages } from 'lucide-react';
 
 export function LanguageSwitcher() {
   const t = useTranslations('common');
@@ -35,6 +43,9 @@ export function LanguageSwitcher() {
       return;
     }
 
+    // Set cookie for the new locale
+    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`; // 1 year expiration
+
     const newPath = `/${locale}${pathnameWithoutLocale || ''}`;
     router.push(newPath);
     setIsOpen(false);
@@ -44,45 +55,26 @@ export function LanguageSwitcher() {
   const currentLocaleDisplay = availableLocales.find(loc => loc.id === currentLocale)?.name || currentLocale;
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        className="flex items-center space-x-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-      >
-        <span>{currentLocaleDisplay}</span>
-        <svg
-          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800 dark:ring-gray-700">
-          <div className="py-1" role="menu" aria-orientation="vertical">
-            {availableLocales.map((locale) => (
-              <button
-                key={locale.id}
-                onClick={() => switchLocale(locale.id)}
-                className={`block w-full px-4 py-2 text-left text-sm ${
-                  locale.id === currentLocale
-                    ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white'
-                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
-                }`}
-                role="menuitem"
-              >
-                {locale.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+    <div ref={dropdownRef}>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <Languages className="h-5 w-5" />
+            <span className="sr-only">{t('changeLanguage')}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {availableLocales.map((locale) => (
+            <DropdownMenuItem
+              key={locale.id}
+              className={`cursor-pointer ${locale.id === currentLocale ? 'font-bold bg-gray-100 dark:bg-gray-800' : ''}`}
+              onClick={() => switchLocale(locale.id)}
+            >
+              {locale.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 } 

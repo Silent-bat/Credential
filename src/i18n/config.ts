@@ -160,6 +160,27 @@ export default getRequestConfig(async ({ locale }) => {
       
       // Return key for debugging or empty string for production
       return process.env.NODE_ENV === 'development' ? `${namespace ? `${namespace}.` : ''}${key}` : '';
-    }
+    },
+    // Add time zone support
+    timeZone: 'UTC',
+    // Add number formatting support
+    numberFormat: {
+      currency: {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      },
+      decimal: {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      },
+      percent: {
+        style: 'percent',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      },
+    },
   };
 }); 

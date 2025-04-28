@@ -5,10 +5,22 @@ import { getToken } from 'next-auth/jwt';
 
 // Helper function to get locale from request
 function getLocale(request: NextRequest): string {
+  // First check for locale in cookie
+  const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
+  if (cookieLocale && locales.includes(cookieLocale as any)) {
+    return cookieLocale;
+  }
+
+  // Then check for locale in path
+  const pathLocale = request.nextUrl.pathname.split('/')[1];
+  if (pathLocale && locales.includes(pathLocale as any)) {
+    return pathLocale;
+  }
+
+  // Finally, try to match from accept-language header
   const acceptLanguage = request.headers.get('accept-language') || '';
   const languages = acceptLanguage.split(',').map(lang => lang.split(';')[0].trim());
   
-  // Try to match one of our locales
   try {
     return match(languages, locales, defaultLocale);
   } catch (error) {
@@ -61,14 +73,15 @@ export default async function middleware(request: NextRequest) {
   
   // Handle root path - redirect to default locale
   if (pathname === '/') {
+    const locale = getLocale(request);
     const url = request.nextUrl.clone();
-    url.pathname = '/en';
+    url.pathname = `/${locale}`;
     return NextResponse.redirect(url);
   }
   
-  // If path doesn't have a valid locale, prefix it with the detected or default locale
+  // If path doesn't have a valid locale, prefix it with the detected locale
   if (!pathnameHasValidLocale) {
-    const locale = 'en'; // Always use 'en' to avoid locale detection issues
+    const locale = getLocale(request);
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}${pathname}`;
     return NextResponse.redirect(url);
