@@ -52,7 +52,7 @@ interface User {
   name: string | null;
   email: string;
   role: string;
-  createdAt: Date;
+  createdAt: string;
   institutionUsers?: UserInstitution[];
 }
 

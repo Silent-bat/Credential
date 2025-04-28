@@ -46,7 +46,7 @@ interface Institution {
   name: string;
   type: string;
   status: string;
-  createdAt: Date;
+  createdAt: string;
   certificates: { id: string }[];
   institutionUsers: {
     user: {
