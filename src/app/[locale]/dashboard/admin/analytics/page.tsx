@@ -9,99 +9,77 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldAlert, ActivityIcon, Users, Building2, Award, FileCheck } from 'lucide-react';
 import { Title, Text, Grid, DonutChart, BarChart, AreaChart } from '@tremor/react';
-import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
 
-async function getAnalyticsData() {
-  const [
-    totalUsers,
-    totalInstitutions,
-    totalCertificates,
-    userGrowth,
-    certificateIssuance,
-    institutionStats,
-    recentActivity
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.institution.count(),
-    prisma.certificate.count(),
-    prisma.user.groupBy({
-      by: ['createdAt'],
-      _count: true,
-      orderBy: {
-        createdAt: 'asc'
-      },
-      where: {
-        createdAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        }
-      }
-    }),
-    prisma.certificate.groupBy({
-      by: ['createdAt'],
-      _count: true,
-      orderBy: {
-        createdAt: 'asc'
-      },
-      where: {
-        createdAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        }
-      }
-    }),
-    prisma.institution.findMany({
-      select: {
-        name: true,
-        _count: {
-          select: {
-            certificates: true,
-            users: true
-          }
-        }
-      },
-      orderBy: {
-        certificates: {
-          _count: 'desc'
-        }
-      },
-      take: 5
-    }),
-    prisma.activityLog.findMany({
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 10,
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
-    })
-  ]);
-
-  return {
-    totalUsers,
-    totalInstitutions,
-    totalCertificates,
-    userGrowth: userGrowth.map(item => ({
-      date: format(item.createdAt, 'MMM dd'),
-      users: item._count
-    })),
-    certificateIssuance: certificateIssuance.map(item => ({
-      date: format(item.createdAt, 'MMM dd'),
-      certificates: item._count
-    })),
-    institutionStats,
-    recentActivity
-  };
+interface AnalyticsData {
+  totalUsers: number;
+  totalInstitutions: number;
+  totalCertificates: number;
+  userGrowth: Array<{ date: string; users: number }>;
+  certificateIssuance: Array<{ date: string; certificates: number }>;
+  institutionStats: Array<{
+    name: string;
+    _count: {
+      certificates: number;
+      users: number;
+    };
+  }>;
+  recentActivity: Array<{
+    user: {
+      name: string;
+      email: string;
+    };
+    action: string;
+    createdAt: string;
+  }>;
 }
 
-export default async function AnalyticsPage() {
-  const data = await getAnalyticsData();
+export default function AnalyticsPage() {
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const t = useTranslations('Analytics');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/analytics');
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics data');
+        }
+        const analyticsData = await response.json();
+        setData(analyticsData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Text>Loading...</Text>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -173,7 +151,7 @@ export default async function AnalyticsPage() {
                   <Text className="text-sm text-gray-500">{activity.action}</Text>
                 </div>
                 <Text className="text-sm text-gray-500">
-                  {format(activity.createdAt, 'MMM dd, HH:mm')}
+                  {format(new Date(activity.createdAt), 'MMM dd, HH:mm')}
                 </Text>
               </div>
             ))}
