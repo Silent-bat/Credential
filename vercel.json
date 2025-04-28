@@ -1,9 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/api/auth/(.*)", "destination": "/api/auth/$1" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!api/|_next/).*)", "destination": "/" }
-  ],
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
