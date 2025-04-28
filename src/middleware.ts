@@ -35,8 +35,14 @@ const publicPaths = [
   '/robots.txt',
   '/_next',
   '/images',
-  '/api',
   '/static'
+];
+
+// API paths that need authentication
+const protectedApiPaths = [
+  '/api/analytics',
+  '/api/admin',
+  '/api/dashboard'
 ];
 
 // Protected routes that require authentication
@@ -45,6 +51,12 @@ const protectedRoutes = [
   '/profile',
   '/admin',
   '/settings',
+];
+
+// Admin-only routes
+const adminRoutes = [
+  '/dashboard/admin',
+  '/api/admin'
 ];
 
 // Authentication-related paths that should never be protected
@@ -61,8 +73,37 @@ const authPaths = [
 export default async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Skip middleware for asset paths and API routes
+  // Skip middleware for asset paths
   if (publicPaths.some(path => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // Handle API routes
+  if (pathname.startsWith('/api')) {
+    // Check if this is a protected API route
+    const isProtectedApi = protectedApiPaths.some(path => pathname.startsWith(path));
+    if (isProtectedApi) {
+      const token = await getToken({ 
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET
+      });
+      
+      if (!token) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+
+      // Check for admin routes
+      const isAdminRoute = adminRoutes.some(path => pathname.startsWith(path));
+      if (isAdminRoute && token.role !== 'ADMIN') {
+        return NextResponse.json(
+          { error: 'Forbidden' },
+          { status: 403 }
+        );
+      }
+    }
     return NextResponse.next();
   }
 
@@ -113,11 +154,22 @@ export default async function middleware(request: NextRequest) {
     url.search = `callbackUrl=${encodeURIComponent(request.url)}`;
     return NextResponse.redirect(url);
   }
+
+  // Check for admin routes
+  const isAdminRoute = adminRoutes.some(route => 
+    pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
+  );
+  
+  if (isAdminRoute && token?.role !== 'ADMIN') {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/dashboard`;
+    return NextResponse.redirect(url);
+  }
   
   return NextResponse.next();
 }
 
 export const config = {
   // Match all request paths except for the ones starting with excluded paths
-  matcher: ['/((?!_next|api|static|favicon.ico).*)'],
+  matcher: ['/((?!_next|static|favicon.ico).*)'],
 }; 

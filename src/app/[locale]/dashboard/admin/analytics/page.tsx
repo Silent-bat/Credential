@@ -5,11 +5,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert, ActivityIcon, Users, Building2, Award, FileCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ShieldAlert, ActivityIcon, Users, Building2, Award, FileCheck, RefreshCw } from 'lucide-react';
 import { Title, Text, Grid, DonutChart, BarChart, AreaChart } from '@tremor/react';
 import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AnalyticsData {
   totalUsers: number;
@@ -38,42 +39,135 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations('Analytics');
 
   useEffect(() => {
+    // Check if session is loading
+    if (status === 'loading') return;
+
+    // Check if user is not authenticated
+    if (status === 'unauthenticated') {
+      router.push(`/${locale}/auth/login`);
+      return;
+    }
+
+    // Check if user is not an admin
+    if (session?.user?.role !== 'ADMIN') {
+      setError('You do not have permission to view this page');
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/analytics');
-        if (!response.ok) {
-          throw new Error('Failed to fetch analytics data');
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/analytics', {
+          next: { revalidate: 60 }, // Revalidate every minute
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.status === 401) {
+          router.push(`/${locale}/auth/login`);
+          return;
         }
+        
+        if (response.status === 403) {
+          setError('You do not have permission to view this page');
+          return;
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch analytics data');
+        }
+        
         const analyticsData = await response.json();
         setData(analyticsData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
+        if (retryCount < 3) {
+          setRetryCount(prev => prev + 1);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [retryCount, router, session, status, locale]);
+
+  // Show loading state while checking session
+  if (status === 'loading') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 mt-2" />
+        </div>
+        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-24 mt-2" />
+            </Card>
+          ))}
+        </Grid>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Text>Loading...</Text>
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 mt-2" />
+        </div>
+        <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-24 mt-2" />
+            </Card>
+          ))}
+        </Grid>
+        <Grid numItems={1} numItemsLg={2} className="gap-6">
+          {[...Array(2)].map((_, i) => (
+            <Card key={i}>
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-72 mt-4" />
+            </Card>
+          ))}
+        </Grid>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <ShieldAlert className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        {retryCount < 3 && (
+          <Button
+            onClick={() => setRetryCount(prev => prev + 1)}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        )}
+      </div>
     );
   }
 
