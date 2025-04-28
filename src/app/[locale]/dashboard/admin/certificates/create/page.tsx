@@ -24,17 +24,17 @@ export default async function CreateCertificatePage({
   
   // Get the session
   const session = await auth();
-  
+
   // Check if user is logged in
   if (!session?.user) {
     redirect(`/${currentLocale}/login?callbackUrl=/${currentLocale}/dashboard/admin/certificates/create`);
   }
-  
+
   // Check if user has permission (admin or institution admin)
   if (!["ADMIN", "INSTITUTION"].includes(session.user.role)) {
     redirect(`/${currentLocale}/dashboard`);
   }
-  
+
   // Fetch institutions based on user role
   let institutions = [];
   try {
@@ -66,7 +66,7 @@ export default async function CreateCertificatePage({
   } catch (error) {
     console.error("Error fetching institutions:", error);
   }
-  
+
   // Get selected institution from query params (properly awaited)
   const selectedInstitutionId = typeof searchParams.institution === 'string' 
     ? searchParams.institution 
@@ -90,10 +90,10 @@ export default async function CreateCertificatePage({
   return (
     <CertificateCreateClient
       locale={currentLocale}
-      institutions={institutions}
+                institutions={institutions} 
       selectedInstitutionId={selectedInstitutionId}
       translations={translations}
       userRole={session.user.role}
-    />
+              />
   );
 } 
