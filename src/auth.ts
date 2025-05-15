@@ -117,11 +117,12 @@ export const authOptions: NextAuthOptions = {
         
         // Get user from session and redirect based on role
         try {
-          // We'll use the default dashboard path and let client-side handle specific redirects
-          return `/${locale}/dashboard`;
+          // Since we can't directly access the session here, we'll redirect to a special
+          // client-side route that will handle the role-based routing
+          return `/${locale}/dashboard/router`;
         } catch (error) {
           console.error("Error in auth redirect:", error);
-          return `/${locale}/dashboard`;
+          return `/${locale}/dashboard/router`;
         }
       }
       
@@ -133,9 +134,8 @@ export const authOptions: NextAuthOptions = {
         // For debug - log complete URL
         console.log(`Handling dashboard-bypass redirect with locale: ${locale}`);
         
-        // We'll just use a simple redirection to the dashboard with locale
-        // The actual role-based routing will be handled by the client components
-        return `/${locale}/dashboard`;
+        // Redirect to router page which will handle role-based redirects client-side
+        return `/${locale}/dashboard/router`;
       }
       
       // Allow all other redirects
