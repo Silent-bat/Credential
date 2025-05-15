@@ -1,10 +1,19 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { useLocale } from 'next-intl';
+import { getLocale } from 'next-intl/server';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ params }) {
   const session = await auth();
-  const locale = useLocale();
+  let locale;
+  
+  try {
+    // Try to get locale from next-intl
+    locale = await getLocale();
+  } catch (error) {
+    // Fallback to params if getLocale fails
+    locale = params?.locale || 'en';
+    console.error('Error getting locale:', error);
+  }
 
   if (!session?.user) {
     redirect(`/${locale}/auth/login`);
@@ -17,6 +26,6 @@ export default async function DashboardPage() {
   } else if (userRole === 'INSTITUTION') {
     redirect(`/${locale}/dashboard/institution`);
   } else {
-    redirect(`/${locale}/dashboard/users`);
+    redirect(`/${locale}/dashboard/user`);
   }
 } 
