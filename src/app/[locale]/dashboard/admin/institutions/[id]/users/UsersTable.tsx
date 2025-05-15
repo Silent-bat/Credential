@@ -37,7 +37,7 @@ type InstitutionUser = {
   role: string;
   institutionId: string;
   userId: string;
-  User: {
+  user: {
     id: string;
     name: string | null;
     email: string;
@@ -70,16 +70,16 @@ export default function UsersTable({ locale, institutionId, institutionName, ins
         {institutionUsers.map((institutionUser) => (
           <TableRow key={institutionUser.userId}>
             <TableCell className="font-medium">
-              {institutionUser.User.name || "No Name"}
+              {institutionUser.user.name || "No Name"}
             </TableCell>
-            <TableCell>{institutionUser.User.email}</TableCell>
+            <TableCell>{institutionUser.user.email}</TableCell>
             <TableCell>
               <span className={`px-2 py-1 rounded text-xs font-medium ${
-                institutionUser.User.role === "ADMIN" 
+                institutionUser.user.role === "ADMIN" 
                   ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" 
                   : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
               }`}>
-                {institutionUser.User.role}
+                {institutionUser.user.role}
               </span>
             </TableCell>
             <TableCell>
@@ -92,7 +92,7 @@ export default function UsersTable({ locale, institutionId, institutionName, ins
               </span>
             </TableCell>
             <TableCell>
-              {new Date(institutionUser.User.createdAt).toLocaleDateString()}
+              {new Date(institutionUser.user.createdAt).toLocaleDateString()}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
@@ -105,13 +105,13 @@ export default function UsersTable({ locale, institutionId, institutionName, ins
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuItem asChild>
-                    <Link href={`/${locale}/dashboard/admin/users/${institutionUser.User.id}/edit`}>
+                    <Link href={`/${locale}/dashboard/admin/users/${institutionUser.user.id}/edit`}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit User
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`mailto:${institutionUser.User.email}`}>
+                    <Link href={`mailto:${institutionUser.user.email}`}>
                       <Mail className="mr-2 h-4 w-4" />
                       Email User
                     </Link>
@@ -162,7 +162,7 @@ export default function UsersTable({ locale, institutionId, institutionName, ins
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will remove {institutionUser.User.name || institutionUser.User.email} from {institutionName}. 
+                          This will remove {institutionUser.user.name || institutionUser.user.email} from {institutionName}. 
                           They will no longer have access to this institution.
                         </AlertDialogDescription>
                       </AlertDialogHeader>

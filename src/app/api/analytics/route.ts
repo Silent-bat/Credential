@@ -4,6 +4,9 @@ import { format } from 'date-fns';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+// Tell Next.js this route is always dynamic
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     // Check authentication
@@ -92,26 +95,29 @@ export async function GET() {
       })
     ]);
 
-    const response = NextResponse.json({
-      totalUsers,
-      totalInstitutions,
-      totalCertificates,
-      userGrowth: userGrowth.map(item => ({
-        date: format(item.createdAt, 'MMM dd'),
-        users: item._count
-      })),
-      certificateIssuance: certificateIssuance.map(item => ({
-        date: format(item.createdAt, 'MMM dd'),
-        certificates: item._count
-      })),
-      institutionStats,
-      recentActivity
-    });
-
-    // Add caching headers
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=30');
-
-    return response;
+    // Return the response with headers included in the options
+    return NextResponse.json(
+      {
+        totalUsers,
+        totalInstitutions,
+        totalCertificates,
+        userGrowth: userGrowth.map(item => ({
+          date: format(item.createdAt, 'MMM dd'),
+          users: item._count
+        })),
+        certificateIssuance: certificateIssuance.map(item => ({
+          date: format(item.createdAt, 'MMM dd'),
+          certificates: item._count
+        })),
+        institutionStats,
+        recentActivity
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30'
+        }
+      }
+    );
   } catch (error) {
     console.error('Error fetching analytics data:', error);
     return NextResponse.json(

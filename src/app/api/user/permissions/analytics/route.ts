@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { canAccessAnalytics } from '@/lib/permissions';
 
+// Tell Next.js this route is always dynamic
+export const dynamic = 'force-dynamic';
+
 // Maximum number of retries for database operations
 const MAX_RETRIES = 3;
 

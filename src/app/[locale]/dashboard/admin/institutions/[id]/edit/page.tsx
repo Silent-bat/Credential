@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,19 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from "@/components/ui/select";
 import { revalidatePath } from "next/cache";
-import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { InstitutionEditForm } from "./institution-edit-form"; // We'll create this next
 
 type Props = {
   params: { 
@@ -32,7 +22,49 @@ type Props = {
   };
 };
 
+// Server action for updating institution
+async function updateInstitution(formData: FormData) {
+  'use server';
+  
+  try {
+    const id = formData.get('id') as string;
+    const locale = formData.get('locale') as string;
+    
+    // Extract form values
+    const name = formData.get('name') as string;
+    const website = formData.get('website') as string;
+    const type = formData.get('type') as string;
+    const status = formData.get('status') as string;
+    const logo = formData.get('logo') as string;
+    const description = formData.get('description') as string;
+
+    // Update institution in database
+    await db.institution.update({
+      where: { id },
+      data: {
+        name,
+        website,
+        type,
+        status,
+        logo,
+        description,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Revalidate the institutions page
+    revalidatePath(`/${locale}/dashboard/admin/institutions`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating institution:', error);
+    return { success: false, error: 'Failed to update institution' };
+  }
+}
+
 export default async function EditInstitutionPage({ params }: Props) {
+  // Await params before destructuring
+  params = await Promise.resolve(params);
   const { locale, id } = params;
   const session = await auth();
   const user = session?.user;
@@ -54,9 +86,9 @@ export default async function EditInstitutionPage({ params }: Props) {
   const institution = await db.institution.findUnique({
     where: { id },
     include: {
-      InstitutionUser: {
+      institutionUsers: {
         include: {
-          User: {
+          user: {
             select: {
               id: true,
               name: true,
@@ -82,44 +114,6 @@ export default async function EditInstitutionPage({ params }: Props) {
         </Button>
       </div>
     );
-  }
-
-  // Server action to handle form submission
-  async function updateInstitution(formData: FormData) {
-    'use server';
-    
-    try {
-      // Extract form values
-      const name = formData.get('name') as string;
-      const email = formData.get('email') as string;
-      const website = formData.get('website') as string;
-      const type = formData.get('type') as string;
-      const status = formData.get('status') as string;
-      const logo = formData.get('logo') as string;
-      const description = formData.get('description') as string;
-
-      // Update institution in database
-      await db.institution.update({
-        where: { id },
-        data: {
-          name,
-          email,
-          website,
-          type,
-          status,
-          logo,
-          description,
-          updatedAt: new Date(),
-        },
-      });
-
-      // Revalidate the institutions page and redirect
-      revalidatePath(`/${locale}/dashboard/admin/institutions`);
-      redirect(`/${locale}/dashboard/admin/institutions`);
-    } catch (error) {
-      console.error('Error updating institution:', error);
-      return { error: 'Failed to update institution' };
-    }
   }
 
   return (
@@ -148,107 +142,12 @@ export default async function EditInstitutionPage({ params }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={updateInstitution} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Institution Name</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  defaultValue={institution.name}
-                  placeholder="Enter institution name" 
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Contact Email</Label>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email"
-                  defaultValue={institution.email || ''}
-                  placeholder="Enter contact email" 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website">Website (Optional)</Label>
-                <Input 
-                  id="website" 
-                  name="website" 
-                  defaultValue={institution.website || ''}
-                  placeholder="Enter website URL" 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">Institution Type</Label>
-                <Select name="type" defaultValue={institution.type}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="UNIVERSITY">University</SelectItem>
-                    <SelectItem value="COLLEGE">College</SelectItem>
-                    <SelectItem value="SCHOOL">School</SelectItem>
-                    <SelectItem value="TRAINING_CENTER">Training Center</SelectItem>
-                    <SelectItem value="COMPANY">Company</SelectItem>
-                    <SelectItem value="GOVERNMENT">Government</SelectItem>
-                    <SelectItem value="NONPROFIT">Non-Profit</SelectItem>
-                    <SelectItem value="OTHER">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select name="status" defaultValue={institution.status}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="APPROVED">Approved</SelectItem>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="logo">Logo URL (Optional)</Label>
-                <Input 
-                  id="logo" 
-                  name="logo" 
-                  defaultValue={institution.logo || ''}
-                  placeholder="Enter logo URL" 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea 
-                id="description" 
-                name="description" 
-                defaultValue={institution.description || ''}
-                placeholder="Enter institution description" 
-                rows={4} 
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" asChild>
-                <Link href={`/${locale}/dashboard/admin/institutions`}>
-                  Cancel
-                </Link>
-              </Button>
-              <Button type="submit">
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </Button>
-            </div>
-          </form>
+          <InstitutionEditForm 
+            institution={institution} 
+            updateInstitution={updateInstitution} 
+            locale={locale}
+            id={id}
+          />
         </CardContent>
       </Card>
       <Toaster />

@@ -12,6 +12,9 @@ import { Title, Text, Grid, DonutChart, BarChart, AreaChart } from '@tremor/reac
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Tell Next.js this is a dynamic route
+export const dynamic = 'force-dynamic';
+
 interface AnalyticsData {
   totalUsers: number;
   totalInstitutions: number;
@@ -255,5 +258,3 @@ export default function AnalyticsPage() {
     </div>
   );
 }
-
-export const dynamic = 'force-dynamic'

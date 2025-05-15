@@ -21,6 +21,8 @@ type Props = {
 };
 
 export default async function InstitutionUsersPage({ params }: Props) {
+  // Await params before destructuring
+  params = await Promise.resolve(params);
   const { locale, id: institutionId } = params;
   const session = await auth();
   const user = session?.user;
@@ -42,9 +44,9 @@ export default async function InstitutionUsersPage({ params }: Props) {
   const institution = await db.institution.findUnique({
     where: { id: institutionId },
     include: {
-      InstitutionUser: {
+      institutionUsers: {
         include: {
-          User: {
+          user: {
             select: {
               id: true,
               name: true,
@@ -98,7 +100,7 @@ export default async function InstitutionUsersPage({ params }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {institution.InstitutionUser.length === 0 ? (
+          {institution.institutionUsers.length === 0 ? (
             <div className="text-center py-6">
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No Users Found</h3>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
@@ -116,7 +118,7 @@ export default async function InstitutionUsersPage({ params }: Props) {
               locale={locale} 
               institutionId={institutionId} 
               institutionName={institution.name}
-              institutionUsers={institution.InstitutionUser} 
+              institutionUsers={institution.institutionUsers} 
             />
           )}
         </CardContent>

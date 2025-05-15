@@ -59,7 +59,20 @@
       "passwordMismatch": "Las contraseñas no coinciden",
       "noResults": "No se encontraron resultados",
       "sessionExpired": "Su sesión ha expirado, por favor inicie sesión nuevamente",
-      "dbConnectionError": "Error de conexión a la base de datos. Por favor, inténtelo de nuevo más tarde."
+      "dbConnectionError": "Error de conexión a la base de datos. Por favor, inténtelo de nuevo más tarde.",
+      "unauthorized": "No autorizado",
+      "accessDenied": "Acceso denegado",
+      "invalidCredentials": "Credenciales inválidas",
+      "networkError": "Error de red",
+      "tryAgain": "Intentar de nuevo",
+      "retry": "Reintentar",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "back": "Volver",
+      "next": "Siguiente",
+      "submit": "Enviar"
     },
     "navigation": {
       "home": "Inicio",
@@ -648,7 +661,7 @@
   },
   "Analytics": {
     "title": "Panel de Análisis",
-    "description": "Monitoree la actividad de la plataforma y las métricas de rendimiento",
+    "description": "Monitorear la actividad de la plataforma y las métricas de rendimiento",
     "totalUsers": "Total de Usuarios",
     "totalInstitutions": "Total de Instituciones",
     "totalCertificates": "Total de Certificados",
@@ -656,7 +669,7 @@
     "certificateIssuance": "Emisión de Certificados (30 días)",
     "topInstitutions": "Instituciones Principales",
     "recentActivity": "Actividad Reciente",
-    "certificates": "Certificados",
-    "users": "Usuarios"
+    "certificates": "certificados",
+    "users": "usuarios"
   }
 } 

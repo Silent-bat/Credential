@@ -32,6 +32,8 @@ type Props = {
 };
 
 export default async function AddUserToInstitutionPage({ params }: Props) {
+  // Await params before destructuring
+  params = await Promise.resolve(params);
   const { locale, id: institutionId } = params;
   const session = await auth();
   const user = session?.user;
