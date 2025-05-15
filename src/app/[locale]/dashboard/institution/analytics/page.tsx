@@ -23,6 +23,9 @@ import { toast } from '@/components/ui/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ShieldAlert, AlertTriangle } from 'lucide-react';
 
+// Tell Next.js this is a dynamic route
+export const dynamic = 'force-dynamic';
+
 type AnalyticsProps = {
   params: {
     locale: string;

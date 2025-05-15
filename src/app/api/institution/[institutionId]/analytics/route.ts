@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canAccessInstitution } from '@/lib/permissions';
 
+// Tell Next.js this route is always dynamic
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   context: { params: { institutionId: string } }

@@ -6,6 +6,9 @@ import { locales } from '@/i18n/config';
 import { getMessages } from '@/i18n';
 import DashboardHeader from "@/components/dashboard/header";
 
+// Tell Next.js to always render this layout dynamically
+export const dynamic = 'force-dynamic';
+
 type Props = {
   children: React.ReactNode;
   params: {

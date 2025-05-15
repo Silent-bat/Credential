@@ -27,6 +27,8 @@ type Props = {
 };
 
 export default async function InstitutionDetailsPage({ params }: Props) {
+  // Await params before destructuring
+  params = await Promise.resolve(params);
   const { locale, id: institutionId } = params;
   const session = await auth();
   const user = session?.user;
@@ -48,9 +50,9 @@ export default async function InstitutionDetailsPage({ params }: Props) {
   const institution = await db.institution.findUnique({
     where: { id: institutionId },
     include: {
-      InstitutionUser: {
+      institutionUsers: {
         include: {
-          User: {
+          user: {
             select: {
               id: true,
               name: true,
@@ -99,7 +101,7 @@ export default async function InstitutionDetailsPage({ params }: Props) {
     },
   });
 
-  const userCount = institution.InstitutionUser.length;
+  const userCount = institution.institutionUsers.length;
 
   return (
     <div className="p-8">
@@ -212,7 +214,9 @@ export default async function InstitutionDetailsPage({ params }: Props) {
                 
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Contact Email</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{institution.email || "No email provided"}</dd>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                    No email associated with this institution
+                  </dd>
                 </div>
                 
                 <div>
@@ -280,7 +284,7 @@ export default async function InstitutionDetailsPage({ params }: Props) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {institution.InstitutionUser.length === 0 ? (
+              {institution.institutionUsers.length === 0 ? (
                 <div className="text-center py-8">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No Users Found</h3>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
@@ -299,22 +303,22 @@ export default async function InstitutionDetailsPage({ params }: Props) {
                       </tr>
                     </thead>
                     <tbody>
-                      {institution.InstitutionUser.map((institutionUser) => (
+                      {institution.institutionUsers.map((institutionUser) => (
                         <tr 
                           key={institutionUser.userId} 
                           className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                         >
                           <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                            {institutionUser.User.name || "No Name"}
+                            {institutionUser.user.name || "No Name"}
                           </td>
-                          <td className="px-6 py-4">{institutionUser.User.email}</td>
+                          <td className="px-6 py-4">{institutionUser.user.email}</td>
                           <td className="px-6 py-4">
                             <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
                               {institutionUser.role}
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <Link href={`/${locale}/dashboard/admin/users/${institutionUser.User.id}/edit`}>
+                            <Link href={`/${locale}/dashboard/admin/users/${institutionUser.userId}/edit`}>
                               <Button variant="outline" size="sm">
                                 <PencilIcon className="h-4 w-4" />
                               </Button>
