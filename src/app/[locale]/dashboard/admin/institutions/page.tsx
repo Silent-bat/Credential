@@ -6,6 +6,7 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InstitutionsList from "./institutions-list";
 import { InstitutionType } from "@prisma/client";
+import { getTranslations } from "next-intl/server";
 
 type Props = {
   params: {
@@ -38,9 +39,12 @@ type InstitutionWithRelations = {
 }
 
 export default async function InstitutionsPage({ params }: Props) {
+  // First await params before destructuring
+  params = await Promise.resolve(params);
   const { locale } = params;
   const session = await auth();
   const user = session?.user;
+  const t = await getTranslations('dashboard.institutions');
 
   if (!user) {
     redirect(`/${locale}/auth/login`);
@@ -49,8 +53,8 @@ export default async function InstitutionsPage({ params }: Props) {
   if (user.role !== "ADMIN") {
     return (
       <div className="p-8">
-        <h1 className="text-2xl font-bold">Unauthorized</h1>
-        <p>You don't have permission to access this page.</p>
+        <h1 className="text-2xl font-bold">{t('unauthorized')}</h1>
+        <p>{t('noAccessPermission')}</p>
       </div>
     );
   }
@@ -85,7 +89,7 @@ export default async function InstitutionsPage({ params }: Props) {
     });
   } catch (err) {
     console.error("Error fetching institutions:", err);
-    error = "Failed to load institutions data";
+    error = t('loadError');
   }
 
   // Convert dates to strings to avoid serialization issues with client components
@@ -109,15 +113,15 @@ export default async function InstitutionsPage({ params }: Props) {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-600 ">Institutions</h1>
+          <h1 className="text-3xl font-bold text-gray-600 ">{t('title')}</h1>
           <p className="text-gray-600 mt-2">
-            Manage educational institutions in the system
+            {t('subtitle')}
           </p>
         </div>
         <Button asChild>
           <Link href={`/${locale}/dashboard/admin/institutions/new`}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Add Institution
+            {t('addInstitution')}
           </Link>
         </Button>
       </div>
@@ -126,7 +130,7 @@ export default async function InstitutionsPage({ params }: Props) {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
           {error}
           <Button variant="outline" size="sm" className="ml-4" onClick={() => window.location.reload()}>
-            Retry
+            {t('retryLoading')}
           </Button>
         </div>
       ) : (
