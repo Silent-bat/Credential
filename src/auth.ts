@@ -5,6 +5,29 @@ import prisma from '@/lib/db';
 import { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 
+// Extend the session and JWT types to include custom fields
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      role: string;
+      preferredLocale: string;
+      institutionId?: string | null;
+    }
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+    preferredLocale: string;
+    institutionId?: string | null;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -75,10 +98,10 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.preferredLocale = token.preferredLocale as string;
-        session.user.institutionId = token.institutionId as string;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.preferredLocale = token.preferredLocale;
+        session.user.institutionId = token.institutionId;
       }
       return session;
     },

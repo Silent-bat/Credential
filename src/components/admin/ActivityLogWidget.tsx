@@ -15,15 +15,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ActivityLogWidget() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         // Add skipAuth in development
         const params = new URLSearchParams();
         if (process.env.NODE_ENV === "development") {
@@ -34,6 +40,17 @@ export default function ActivityLogWidget() {
         setStats(response.data);
       } catch (error) {
         console.error("Error fetching log statistics:", error);
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 500) {
+            setError("Server error occurred. The database may be unavailable or there might be data integrity issues.");
+          } else if (error.response?.status === 401) {
+            setError("You are not authorized to view this data.");
+          } else {
+            setError(`Error: ${error.message || "Failed to load activity log data"}`);
+          }
+        } else {
+          setError("An unexpected error occurred while loading activity log data.");
+        }
       } finally {
         setLoading(false);
       }
@@ -62,6 +79,37 @@ export default function ActivityLogWidget() {
     );
   }
 
+  if (error) {
+    return (
+      <Card className="col-span-full">
+        <CardHeader>
+          <CardTitle>Activity Logs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <div className="mt-4">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                setTimeout(() => {
+                  window.location.reload();
+                }, 500);
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!stats) {
     return (
       <Card className="col-span-full">
@@ -70,6 +118,18 @@ export default function ActivityLogWidget() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">Failed to load log statistics.</p>
+          <Button 
+            variant="outline" 
+            className="mt-2"
+            onClick={() => {
+              setLoading(true);
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
+            }}
+          >
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
@@ -77,6 +137,56 @@ export default function ActivityLogWidget() {
 
   // Set default categories if missing
   const categories = stats.categories || [];
+
+  // Create default data if any property is missing
+  const ensureStatsStructure = () => {
+    if (!stats.overview) {
+      stats.overview = {
+        totalLogs: 0,
+        logsToday: 0,
+        logsYesterday: 0,
+        logsThisWeek: 0,
+        logsThisMonth: 0,
+      };
+    }
+
+    if (!stats.verification) {
+      stats.verification = {
+        total: 0,
+        successful: 0,
+        failed: 0,
+        successRate: '0.0',
+      };
+    }
+
+    if (!stats.blockchain) {
+      stats.blockchain = {
+        total: 0,
+        successful: 0,
+        failed: 0,
+        successRate: '0.0',
+      };
+    }
+
+    if (!stats.dailyActivity || !Array.isArray(stats.dailyActivity)) {
+      // Create empty daily activity data for the last 7 days
+      const today = new Date();
+      stats.dailyActivity = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(today);
+        date.setDate(date.getDate() - (6 - i));
+        return {
+          date: date.toISOString().split('T')[0],
+          count: 0,
+        };
+      });
+    }
+
+    if (!stats.recentFailures || !Array.isArray(stats.recentFailures)) {
+      stats.recentFailures = [];
+    }
+  };
+
+  ensureStatsStructure();
 
   return (
     <>
@@ -182,10 +292,10 @@ export default function ActivityLogWidget() {
             <div>
               <h4 className="text-sm font-medium mb-2">Recent Verification Failures</h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {stats.recentFailures.map((failure: any) => (
-                  <div key={failure.id} className="text-xs border-l-2 border-red-500 pl-2 py-1">
+                {stats.recentFailures.map((failure: any, index: number) => (
+                  <div key={failure?.id || index} className="text-xs border-l-2 border-red-500 pl-2 py-1">
                     <p className="font-medium">{new Date(failure.createdAt).toLocaleString()}</p>
-                    <p className="text-muted-foreground">{failure.details}</p>
+                    <p className="text-muted-foreground">{failure.details || 'No details available'}</p>
                     {failure.metadata && (
                       <p className="text-muted-foreground">
                         {typeof failure.metadata === 'object' 
@@ -233,20 +343,17 @@ export default function ActivityLogWidget() {
           </div>
 
           <div>
-            <h4 className="text-sm font-medium mb-2">Activity by Category</h4>
+            <h4 className="text-sm font-medium mb-2">Activity Categories</h4>
             <div className="space-y-2">
               {categories.length > 0 ? (
-                [...categories]
-                  .sort((a: any, b: any) => b.count - a.count)
-                  .slice(0, 5)
-                  .map((category: any) => (
-                    <div key={category.category} className="flex justify-between items-center">
-                      <span className="text-xs">{category.category.replace(/_/g, " ")}</span>
-                      <span className="text-xs font-medium">{category.count.toLocaleString()}</span>
-                    </div>
-                  ))
+                categories.map((cat: any, index: number) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span>{cat.category}</span>
+                    <span className="font-medium">{cat.count.toLocaleString()}</span>
+                  </div>
+                ))
               ) : (
-                <p className="text-xs text-muted-foreground">No category data available</p>
+                <p className="text-sm text-muted-foreground">No category data available</p>
               )}
             </div>
           </div>
